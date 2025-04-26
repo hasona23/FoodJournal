@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FoodJournal.API.Controllers;
 [Route("api/[controller]")]
 [ApiController]
+
 public class FoodController : ControllerBase
 {
     private IFoodService _foodService;

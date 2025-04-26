@@ -10,6 +10,8 @@ namespace FoodJournal.API.Data
 
 
         public DbSet<Meal> Meals { get; set; }
+
+
         public DbSet<Food> Foods { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
@@ -24,7 +26,6 @@ namespace FoodJournal.API.Data
                 .HasMany(meal => meal.Foods)
                 .WithMany(food => food.Meals)
                 .UsingEntity(e => e.ToTable("MealFoodJoinTable"));
-
 
 
         }
