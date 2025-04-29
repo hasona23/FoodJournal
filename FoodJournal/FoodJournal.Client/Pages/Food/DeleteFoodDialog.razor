@@ -1,0 +1,28 @@
+﻿
+<MudDialog>
+
+    <TitleContent>
+        Delete Food
+    </TitleContent>
+    <DialogContent>
+        Do you want to Delete "@FoodItem.Name"
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Delete">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+    [Parameter]
+    public FoodGetDTOWithMeals FoodItem { get; set; }
+
+    private void Delete()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

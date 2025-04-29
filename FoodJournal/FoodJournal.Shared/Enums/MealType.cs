@@ -1,6 +1,6 @@
 ﻿namespace FoodJournal.Shared.Enums
 {
-    public enum MealCategory
+    public enum MealType
     {
         BreakFast,
         Lunch,

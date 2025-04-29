@@ -1,0 +1,80 @@
+﻿@using FoodJournal.Client.Services
+
+<MudDialog Style="min-width:25%;min-height:20%; padding:20px">
+
+    <TitleContent>
+        Update Food
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+        <MudTextField Required="true" @bind-Value="@newMealName"
+        Label="Name" Variant="Variant.Outlined"></MudTextField>
+
+            <MudToggleGroup T="MealType"
+                            SelectionMode="SelectionMode.SingleSelection"
+                            @bind-Value="newMealType" Color="Color.Secondary"
+                            CheckMark>
+                @foreach (MealType mealType in Enum.GetValues<MealType>())
+                {
+                    <MudToggleItem Text="@Enum.GetName(mealType)"  Value="@(mealType)"
+                                   UnselectedIcon="@Icons.Material.Filled.CheckBoxOutlineBlank"
+                                   SelectedIcon="@Icons.Material.Filled.CheckBox" />
+
+                }
+            </MudToggleGroup>
+
+            @if (FoodItems.Any())
+            {
+                <MudText>Food Items</MudText>
+                <MudToggleGroup T="FoodGetDTO"
+                                SelectionMode="SelectionMode.MultiSelection"
+                                @bind-Values="newFoods" Color="Color.Secondary">
+                    @foreach (FoodGetDTO fooditem in FoodItems)
+                    {
+                        <MudToggleItem Value="@(fooditem)"
+                                       UnselectedIcon="@Icons.Material.Filled.CheckBoxOutlineBlank"
+                                       SelectedIcon="@Icons.Material.Filled.CheckBox" />
+
+                    }
+                </MudToggleGroup>
+            }
+            else
+            {
+                <MudText Style="align-self:center;justify-self:center">No Food Items</MudText>
+            }
+        
+        
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Update">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public MealGetDTOWithFoods OldMealData { get; set; }
+    [Parameter]
+    public IEnumerable<FoodGetDTO> FoodItems { get; set; }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        newMealName = OldMealData.Name;
+        newMealType = OldMealData.MealType;
+        newFoods = OldMealData.Foods;
+    }
+    private string newMealName { get; set; }
+    private MealType newMealType { get; set; }
+    private IEnumerable<FoodGetDTO> newFoods { get; set; }
+    private void Update()
+    {
+
+        MudDialog.Close(DialogResult.Ok(new MealUpdateDTO(OldMealData.Id,newMealName,newMealType,newFoods)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

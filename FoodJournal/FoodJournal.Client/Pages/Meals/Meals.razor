@@ -1,0 +1,139 @@
+﻿@using FoodJournal.Client.Services
+@inject IMealAPIService mealService
+@inject IFoodAPIService foodService
+@inject IDialogService  dialogService
+@page "/meals"
+
+<span class="d-inline">
+    <MudText style="margin-right:5px" Typo="Typo.h3">
+        Meals
+        <MudIconButton @onclick="CreateAsync" Icon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
+
+        </MudIconButton>
+    </MudText>
+
+</span>
+@if (_meals != null)
+{
+    <MudTable Items="@_meals" Hover="true"
+    Breakpoint="Breakpoint.Sm" Loading="@_loading"
+    LoadingProgressColor="Color.Info">
+        <ColGroup>
+            <col style="width: 20%;" />
+            <col style="width: 10%" />
+            <col style="width: 50%;" />
+            <col style="width: 20%" />
+        </ColGroup>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Meal Type</MudTh>
+            <MudTh>Ingredients</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Meal Type">@Enum.GetName(context.MealType)</MudTd>
+            <MudTd DataLabel="Ingredients">
+                @if(context.Foods.Any())
+                {
+                    @string.Join(" | ", context.Foods.Select(f => f.Name))
+                }
+                else
+                {
+                    <MudText>None</MudText>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="">
+                <span class="d-inline">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                    OnClick="@(()=>DeleteAsync(context))"></MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                    OnClick="@(()=>UpdateAsync(context))"></MudIconButton>
+                </span>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+@code {
+    private List<MealGetDTOWithFoods>? _meals = null;
+
+
+    private bool _loading = false;
+    protected override async Task OnInitializedAsync()
+    {
+
+        await LoadMeals();
+
+    }
+    private async Task LoadMeals()
+    {
+        _loading = true;
+        _meals = await mealService.FetchAllMeals();
+        _loading = false;
+    }
+    private async Task CreateAsync()
+    {
+
+        var paramters = new DialogParameters<UpdateMealDialog>()
+        {
+            { x=> x.FoodItems,await GetAllFoodItems()}
+        };
+        var dialog = await dialogService.ShowAsync<CreateMealDialog>("Create",paramters);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            if(result.Data is MealCreateDTO meal)
+            {
+                await mealService.CreateMeal(meal);
+                await LoadMeals();
+            }
+
+        }
+    }
+    private async Task UpdateAsync(MealGetDTOWithFoods meal)
+    {
+
+        var paramters = new DialogParameters<UpdateMealDialog>()
+        {
+            { x => x.OldMealData,meal},
+            { x=> x.FoodItems,await GetAllFoodItems()}
+
+        };
+        var dialog = await dialogService.ShowAsync<UpdateMealDialog>("Delete", paramters);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {   if (result.Data is MealUpdateDTO newMeal)
+            {
+                await mealService.UpdateMeal(meal.Id, newMeal);
+                await LoadMeals();
+            }
+        }
+
+    }
+    private async Task DeleteAsync(MealGetDTOWithFoods mealItem)
+    {
+
+        var paramters = new DialogParameters<DeleteMealDialog>()
+        {
+
+            { x=>x.MealItem,mealItem}
+        };
+
+        var dialog = await dialogService.ShowAsync<DeleteMealDialog>("Delete", paramters);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await mealService.DeleteMeal(mealItem.Id);
+            await LoadMeals();
+        }
+    }
+    private async Task<IEnumerable<FoodGetDTO>> GetAllFoodItems()
+    {
+        return (await foodService.FetchAllFoods()).Select(f => new FoodGetDTO(f.Id,f.Name));
+    }
+}

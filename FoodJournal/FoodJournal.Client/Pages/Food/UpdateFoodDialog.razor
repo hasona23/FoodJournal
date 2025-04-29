@@ -1,0 +1,37 @@
+﻿@using FoodJournal.Client.Services
+
+<MudDialog>
+
+    <TitleContent>
+        Update Food
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Required="true" @bind-Value="@newFoodName"
+        Label="Name" Variant="Variant.Outlined"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Update">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public FoodGetDTOWithMeals oldFoodData { get; set; }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        newFoodName = oldFoodData.Name;
+    }
+    private string newFoodName { get; set; }
+    private void Update()
+    {
+
+        MudDialog.Close(DialogResult.Ok(new FoodUpdateDTO(oldFoodData.Id,newFoodName)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

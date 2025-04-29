@@ -1,7 +1,29 @@
 ﻿@inherits LayoutComponentBase
+
+
+@* Required *@
+<MudThemeProvider IsDarkMode="true"/>
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+
+<MudDialogProvider FullWidth="false"
+                   MaxWidth="MaxWidth.Large"
+                   CloseButton="true"
+                   BackdropClick="false"
+                   NoHeader="true"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true"
+                   
+                   />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+         <NavMenu />
+
     </div>
 
     <main>
@@ -14,3 +36,4 @@
         </article>
     </main>
 </div>
+

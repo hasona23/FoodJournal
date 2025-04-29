@@ -69,7 +69,7 @@ public class MealService : IMealService
         {
             var meals = _context.Meals.Include(m => m.Foods);
             var mealsDto = await meals.Select(m =>
-            new MealGetDTOWithFoods(m.Id, m.Name, m.GetFoodsDTO())
+            new MealGetDTOWithFoods(m.Id, m.Name, m.MealType, m.GetFoodsDTO())
             ).ToListAsync();
 
             return ResultWithValue<List<MealGetDTOWithFoods>>.Success(mealsDto);
@@ -90,7 +90,7 @@ public class MealService : IMealService
             {
                 return ResultWithValue<MealGetDTOWithFoods>.Error(Result.NotFoundError());
             }
-            return ResultWithValue<MealGetDTOWithFoods>.Success(new MealGetDTOWithFoods(meal.Id, meal.Name, meal.GetFoodsDTO()));
+            return ResultWithValue<MealGetDTOWithFoods>.Success(new MealGetDTOWithFoods(meal.Id, meal.Name, meal.MealType, meal.GetFoodsDTO()));
         }
         catch (Exception ex)
         {

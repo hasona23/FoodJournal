@@ -1,0 +1,105 @@
+﻿@using FoodJournal.Client.Services
+@inject IFoodAPIService foodService
+@inject IDialogService dialogService
+@page "/food"
+<span class="d-inline">
+    <MudText style="margin-right:5px" Typo="Typo.h3">
+        Food 
+        <MudIconButton @onclick="CreateAsync" Icon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
+
+        </MudIconButton>
+    </MudText>
+
+</span>
+@if (_food != null)
+{
+    <MudContainer>
+        @foreach(var food in _food)
+        {
+            <MudButton style="width:33%">
+                <MudCard style="width:100%">
+                    <MudCardContent class="d-flex justify-content-center align-items-center ">
+                        <MudText>@food.Name</MudText>
+
+                    </MudCardContent>
+                    <MudCardActions class="d-inline-flex align-items-center justify-content-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
+                        OnClick="@(()=>DeleteAsync(food))"></MudIconButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                        OnClick="@(()=>UpdateAsync(food))"   ></MudIconButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudButton>
+        }
+    </MudContainer>
+}
+@code {
+    private List<FoodGetDTOWithMeals>? _food = null;
+    
+    protected override async Task OnInitializedAsync()
+    {
+
+        await LoadFood();
+
+    }
+    private async Task LoadFood()
+    {
+        
+        _food = await foodService.FetchAllFoods();
+        
+    }
+    private async Task CreateAsync()
+    {
+
+
+        var dialog = await dialogService.ShowAsync<CreateFoodDialog>("Create" );
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            if (result.Data is FoodCreateDTO food) 
+            {
+                await foodService.CreateFood(food);
+                await LoadFood();
+            } 
+        }
+    }
+    private async Task UpdateAsync(FoodGetDTOWithMeals food)
+    {
+
+        var paramters = new DialogParameters<UpdateFoodDialog>()
+        {
+            { x => x.oldFoodData,food}
+        };
+        var dialog = await dialogService.ShowAsync<UpdateFoodDialog>("Delete",paramters);
+        var result = await dialog.Result;
+
+        if ((result is not null && !result.Canceled))
+        {
+            if (result.Data is FoodUpdateDTO newFood)
+            {
+                await foodService.UpdateFood(food.Id, newFood);
+                await LoadFood();
+            }
+        }
+    
+    }
+    private async Task DeleteAsync(FoodGetDTOWithMeals foodItem)
+    {
+       
+        var paramters = new DialogParameters<DeleteFoodDialog>()
+        {
+
+            { x=>x.FoodItem,foodItem}
+        };
+
+        var dialog = await dialogService.ShowAsync<DeleteFoodDialog>("Delete", paramters);
+        var result = await dialog.Result;
+
+        if ((result is not null && !result.Canceled))
+        {
+            await foodService.DeleteFood(foodItem.Id);
+            await LoadFood();
+        }
+    }
+}

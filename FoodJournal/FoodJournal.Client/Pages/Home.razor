@@ -1,9 +1,18 @@
 ﻿@page "/"
+@inject NavigationManager navManager
 
+<MudButtonGroup FullWidth>
+    <MudButton OnClick="@(()=> navManager.NavigateTo("/meals"))" Color="Color.Secondary">
+        MEALS
+    </MudButton>
 
-<PageTitle>Home</PageTitle>
+    <MudButton OnClick="@(()=> navManager.NavigateTo("/food"))" Color="Color.Primary">
+        FOOD
+    </MudButton>
+</MudButtonGroup>
 
-<h1>Hello, world!</h1>
+@code{
+   
+}
 
-Welcome to your new app.
 

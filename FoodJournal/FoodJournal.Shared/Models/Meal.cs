@@ -1,4 +1,5 @@
-﻿using FoodJournal.Shared.Models.Dtos;
+﻿using FoodJournal.Shared.Enums;
+using FoodJournal.Shared.Models.Dtos;
 
 namespace FoodJournal.Shared.Models
 {
@@ -7,6 +8,7 @@ namespace FoodJournal.Shared.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public string UserId { get; set; } = string.Empty;
+        public MealType MealType { get; set; }
 
         //Navigation Property
         public virtual List<Food> Foods { get; set; }

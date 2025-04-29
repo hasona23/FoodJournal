@@ -1,0 +1,31 @@
+﻿@using FoodJournal.Client.Services
+<MudDialog  >
+   
+        <TitleContent>
+            Create Food
+        </TitleContent>
+        <DialogContent>
+            <MudTextField Required="true"   @bind-Value="@foodName"
+            Label="Name" Variant="Variant.Outlined"></MudTextField>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Create">Ok</MudButton>
+        </DialogActions>
+  
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+   
+
+    private string foodName { get; set; } = new("");
+    private void Create()
+    {
+        
+        MudDialog.Close(DialogResult.Ok(new FoodCreateDTO(foodName)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

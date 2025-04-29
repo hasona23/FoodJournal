@@ -1,0 +1,66 @@
+﻿<MudDialog>
+
+    <TitleContent>
+        Create Meal
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Required="true" @bind-Value="@mealName"
+        Label="Name" Variant="Variant.Outlined"></MudTextField>
+
+        <MudToggleGroup T="MealType"
+        SelectionMode="SelectionMode.SingleSelection"
+        @bind-Value="mealType" Color="Color.Secondary"
+        CheckMark>
+            @foreach (MealType mealType in Enum.GetValues<MealType>())
+            {
+                <MudToggleItem Text="@Enum.GetName(mealType)" Value="@(mealType)"
+                UnselectedIcon="@Icons.Material.Filled.CheckBoxOutlineBlank"
+                SelectedIcon="@Icons.Material.Filled.CheckBox" />
+
+            }
+        </MudToggleGroup>
+        @if (FoodItems.Any())
+        {
+            <MudText>Food Items</MudText>
+            <MudToggleGroup T="FoodGetDTO"
+            SelectionMode="SelectionMode.MultiSelection"
+            @bind-Values="foods" Color="Color.Secondary">
+                @foreach (FoodGetDTO fooditem in FoodItems)
+                {
+                    <MudToggleItem Value="@(fooditem)"
+                    UnselectedIcon="@Icons.Material.Filled.CheckBoxOutlineBlank"
+                    SelectedIcon="@Icons.Material.Filled.CheckBox" />
+
+                }
+            </MudToggleGroup>
+        }
+        else
+        {
+            <MudText Style="align-self:center;justify-self:center">No Food Items</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Create">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public IEnumerable<FoodGetDTO> FoodItems { get; set; }
+
+    private string mealName { get; set; } = "";
+    private MealType mealType { get; set; } = MealType.BreakFast;
+    private IEnumerable<FoodGetDTO> foods { get; set; } = [];
+
+    private void Create()
+    {
+        
+        MudDialog.Close(DialogResult.Ok(new MealCreateDTO(mealName,mealType,foods)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

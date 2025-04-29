@@ -1,3 +1,4 @@
+using FoodJournal.API;
 using FoodJournal.API.Data;
 using FoodJournal.API.Services;
 using FoodJournal.Shared.Models;
@@ -38,6 +39,15 @@ builder.Services.AddIdentityApiEndpoints<AppUser>(options =>
 ).AddEntityFrameworkStores<AppDbContext>();
 builder.Services.ConfigureApplicationCookie(options => options.ExpireTimeSpan = TimeSpan.FromHours(1));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 using (IServiceScope scope = app.Services.CreateScope())
@@ -46,35 +56,8 @@ using (IServiceScope scope = app.Services.CreateScope())
     AppUser? user = new AppUser() { UserName = "admin", Email = "admin@gmail.com" };
     var result = await signInManager.UserManager.CreateAsync(user, "admin123");
     user = await signInManager.UserManager.FindByEmailAsync(user.Email);
-
     AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    Meal meal = new Meal
-    {
-        UserId = user.Id,
-        Name = "EggsWithPortato",
-        Foods = []
-    };
-    Food food1 = new Food
-    {
-        UserId = user.Id,
-        Name = "Eggs",
-        Meals = [meal],
-    };
-    Food food2 = new Food
-    {
-        UserId = user.Id,
-        Name = "Potatoes",
-        Meals = [meal],
-    };
-    meal.Foods.Add(food2);
-    meal.Foods.Add(food1);
-
-    context.Meals.Add(meal);
-    context.Foods.Add(food2);
-    context.Foods.Add(food1);
-    context.SaveChanges();
-
+    DataSeeder.SeedData(context, user.Id);
 }
 
 // Configure the HTTP request pipeline.
@@ -92,10 +75,12 @@ if (app.Environment.IsDevelopment())
         });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.MapGroup("/account").MapIdentityApi<AppUser>();
+app.UseCors("AllowAll");
 app.Run();
