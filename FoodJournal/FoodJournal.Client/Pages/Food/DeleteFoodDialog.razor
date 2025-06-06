@@ -5,7 +5,7 @@
         Delete Food
     </TitleContent>
     <DialogContent>
-        Do you want to Delete "@FoodItem.Name"
+        Do you want to Delete "@(FoodItem.Name)"
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
@@ -21,8 +21,8 @@
 
     private void Delete()
     {
-        MudDialog.Close(DialogResult.Ok(true));
+        MudDialog?.Close(DialogResult.Ok(true));
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
 }

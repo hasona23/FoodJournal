@@ -1,4 +1,6 @@
-﻿@using FoodJournal.Client.Services
+﻿@using FoodJournal.Client.Models
+@using FoodJournal.Client.Services
+@using System.ComponentModel.DataAnnotations
 
 <MudDialog Style="min-width:25%;min-height:20%; padding:20px">
 
@@ -7,7 +9,7 @@
     </TitleContent>
     <DialogContent>
         <MudForm>
-        <MudTextField Required="true" @bind-Value="@newMealName"
+        <MudTextField Required="true" @bind-Value="@_model.Name" For="()=>_model.Name"
         Label="Name" Variant="Variant.Outlined"></MudTextField>
 
             <MudToggleGroup T="MealType"
@@ -23,7 +25,7 @@
                 }
             </MudToggleGroup>
 
-            @if (FoodItems.Any())
+            @if (FoodItems != null && FoodItems.Any())
             {
                 <MudText>Food Items</MudText>
                 <MudToggleGroup T="FoodGetDTO"
@@ -48,13 +50,13 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Update">Ok</MudButton>
+        <MudButton ButtonType="ButtonType.Submit" Color ="Color.Primary" OnClick="Update">Ok</MudButton>
     </DialogActions>
 
 </MudDialog>
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance? MudDialog { get; set; }
 
     [Parameter]
     public MealGetDTOWithFoods OldMealData { get; set; }
@@ -63,18 +65,20 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        newMealName = OldMealData.Name;
+        _model.Name = OldMealData.Name;
         newMealType = OldMealData.MealType;
         newFoods = OldMealData.Foods;
     }
-    private string newMealName { get; set; }
+    private NameInputModel _model = new NameInputModel();
     private MealType newMealType { get; set; }
     private IEnumerable<FoodGetDTO> newFoods { get; set; }
     private void Update()
     {
-
-        MudDialog.Close(DialogResult.Ok(new MealUpdateDTO(OldMealData.Id,newMealName,newMealType,newFoods)));
+        if(_model.IsValid)
+            MudDialog?.Close(DialogResult.Ok(new MealUpdateDTO(OldMealData.Id,_model.Name,newMealType,newFoods)));
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
+
+   
 }

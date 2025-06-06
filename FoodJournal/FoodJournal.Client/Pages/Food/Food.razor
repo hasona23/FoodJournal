@@ -52,7 +52,7 @@
     {
 
 
-        var dialog = await dialogService.ShowAsync<CreateFoodDialog>("Create" );
+        var dialog = await dialogService.ShowAsync<CreateFoodDialog>("Create");
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled)
@@ -69,7 +69,7 @@
 
         var paramters = new DialogParameters<UpdateFoodDialog>()
         {
-            { x => x.oldFoodData,food}
+            { x => x.oldFoodData,new FoodGetDTO(food.Id,food.Name)}
         };
         var dialog = await dialogService.ShowAsync<UpdateFoodDialog>("Delete",paramters);
         var result = await dialog.Result;

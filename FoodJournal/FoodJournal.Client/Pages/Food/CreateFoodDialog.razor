@@ -1,31 +1,34 @@
-﻿@using FoodJournal.Client.Services
-<MudDialog  >
+﻿@using FoodJournal.Client.Models
+@using FoodJournal.Client.Services
+@using System.ComponentModel.DataAnnotations
+<MudDialog>
    
         <TitleContent>
             Create Food
         </TitleContent>
         <DialogContent>
-            <MudTextField Required="true"   @bind-Value="@foodName"
+            <MudTextField Required="true"   @bind-Value="@_model.Name" For=@(() => _model.Name)
             Label="Name" Variant="Variant.Outlined"></MudTextField>
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="Cancel">Cancel</MudButton>
-            <MudButton Color="Color.Primary" OnClick="Create">Ok</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" OnClick="Create">Ok</MudButton>
         </DialogActions>
   
 </MudDialog>
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance? MudDialog { get; set; }
 
-   
 
-    private string foodName { get; set; } = new("");
+
+    private NameInputModel _model = new NameInputModel();
     private void Create()
     {
-        
-        MudDialog.Close(DialogResult.Ok(new FoodCreateDTO(foodName)));
+        if(_model.IsValid)
+            MudDialog?.Close(DialogResult.Ok(new FoodCreateDTO(_model.Name)));
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
+
 }

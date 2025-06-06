@@ -83,7 +83,7 @@
         var dialog = await dialogService.ShowAsync<CreateMealDialog>("Create",paramters);
         var result = await dialog.Result;
 
-        if (result is not null && !result.Canceled)
+        if (result is not null && !result.Canceled )
         {
             if(result.Data is MealCreateDTO meal)
             {
@@ -114,6 +114,7 @@
         }
 
     }
+
     private async Task DeleteAsync(MealGetDTOWithFoods mealItem)
     {
 

@@ -1,11 +1,14 @@
 ﻿using FoodJournal.Shared.Enums;
 using FoodJournal.Shared.Models.Dtos;
+using System.ComponentModel.DataAnnotations;
 
 namespace FoodJournal.Shared.Models
 {
     public class Meal
     {
         public int Id { get; set; }
+
+        [MinLength(3, ErrorMessage = "Too Short"), MaxLength(16, ErrorMessage = "TooLong")]
         public string Name { get; set; }
         public string UserId { get; set; } = string.Empty;
         public MealType MealType { get; set; }

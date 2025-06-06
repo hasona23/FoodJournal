@@ -63,6 +63,7 @@ public class FoodController : ControllerBase
     }
 
     [HttpGet]
+
     public async Task<ActionResult<List<FoodGetDTOWithMeals>>> GetAllFood()
     {
         var result = await _foodService.GetAllFoodWithMealsAsync();

@@ -1,37 +1,44 @@
-﻿@using FoodJournal.Client.Services
-
+﻿@using FoodJournal.Client.Models
+@using FoodJournal.Client.Services
+@using System.ComponentModel.DataAnnotations
+@inject ILogger<UpdateFoodDialog> logger
 <MudDialog>
 
     <TitleContent>
         Update Food
     </TitleContent>
-    <DialogContent>
-        <MudTextField Required="true" @bind-Value="@newFoodName"
-        Label="Name" Variant="Variant.Outlined"></MudTextField>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Update">Ok</MudButton>
-    </DialogActions>
+   
+        <DialogContent>
+            <MudTextField Required="true" @bind-Value="@_model.Name" For="@(()=>_model.Name)"
+            Label="Name" Variant="Variant.Outlined"></MudTextField>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" OnClick="Update">Ok</MudButton>
+        </DialogActions>
 
 </MudDialog>
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance? MudDialog { get; set; }
 
     [Parameter]
-    public FoodGetDTOWithMeals oldFoodData { get; set; }
+    public FoodGetDTO oldFoodData { get; set; }
+
+
+    private NameInputModel _model = new NameInputModel();
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        newFoodName = oldFoodData.Name;
+        _model.Name = oldFoodData.Name;
     }
-    private string newFoodName { get; set; }
+
     private void Update()
     {
-
-        MudDialog.Close(DialogResult.Ok(new FoodUpdateDTO(oldFoodData.Id,newFoodName)));
+        if(_model.IsValid)
+            MudDialog.Close(DialogResult.Ok(new FoodUpdateDTO(oldFoodData.Id,_model.Name)));
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
+    
 }

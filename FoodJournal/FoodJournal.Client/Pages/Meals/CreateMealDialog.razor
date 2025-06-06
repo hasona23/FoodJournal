@@ -1,10 +1,15 @@
-﻿<MudDialog>
+﻿@using System.ComponentModel.DataAnnotations
+@using FoodJournal.Client.Models
+@inject NavigationManager navigationManager;
+<MudDialog>
 
     <TitleContent>
         Create Meal
     </TitleContent>
+
     <DialogContent>
-        <MudTextField Required="true" @bind-Value="@mealName"
+
+        <MudTextField  Required="true" @bind-Value="@_model.Name" For="()=>_model.Name"
         Label="Name" Variant="Variant.Outlined"></MudTextField>
 
         <MudToggleGroup T="MealType"
@@ -38,29 +43,39 @@
         {
             <MudText Style="align-self:center;justify-self:center">No Food Items</MudText>
         }
+
+
+       
+
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Create">Ok</MudButton>
+        <MudButton ButtonType="ButtonType.Submit" Color =" Color.Primary" OnClick="Create">Ok</MudButton>
+
     </DialogActions>
+
+
+
 
 </MudDialog>
 
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance? MudDialog { get; set; }
     [Parameter]
     public IEnumerable<FoodGetDTO> FoodItems { get; set; }
 
-    private string mealName { get; set; } = "";
+
+    private NameInputModel _model = new NameInputModel();
     private MealType mealType { get; set; } = MealType.BreakFast;
     private IEnumerable<FoodGetDTO> foods { get; set; } = [];
 
     private void Create()
     {
-        
-        MudDialog.Close(DialogResult.Ok(new MealCreateDTO(mealName,mealType,foods)));
+        if(_model.IsValid)
+            MudDialog?.Close(DialogResult.Ok(new MealCreateDTO(_model.Name, mealType, foods)));
     }
 
-    private void Cancel() => MudDialog.Cancel();
-}
+    private void Cancel() => MudDialog?.Cancel();
+   
+    }
