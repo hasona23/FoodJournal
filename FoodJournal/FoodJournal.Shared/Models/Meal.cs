@@ -10,7 +10,9 @@ namespace FoodJournal.Shared.Models
 
         [MinLength(3, ErrorMessage = "Too Short"), MaxLength(16, ErrorMessage = "TooLong")]
         public string Name { get; set; }
-        public string UserId { get; set; } = string.Empty;
+
+        public bool IsStarred { get; set; }
+        public DateTime DateEaten { get; set; }
         public MealType MealType { get; set; }
 
         //Navigation Property
@@ -20,5 +22,7 @@ namespace FoodJournal.Shared.Models
         {
             return Foods.Select(f => new FoodGetDTO(f.Id, f.Name));
         }
+        public string UserId { get; set; }
+        public AppUser User { get; set; }
     }
 }

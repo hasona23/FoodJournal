@@ -5,7 +5,7 @@
 <span class="d-inline">
     <MudText style="margin-right:5px" Typo="Typo.h3">
         Food 
-        <MudIconButton @onclick="CreateAsync" Icon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
+        <MudIconButton @onclick="CreateAsync" Icon="@Icons.Material.Outlined.Add" Variant="Variant.Filled" Color="Color.Primary">
 
         </MudIconButton>
     </MudText>
@@ -23,9 +23,9 @@
 
                     </MudCardContent>
                     <MudCardActions class="d-inline-flex align-items-center justify-content-center">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" 
                         OnClick="@(()=>DeleteAsync(food))"></MudIconButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Color="Color.Warning"
                         OnClick="@(()=>UpdateAsync(food))"   ></MudIconButton>
                     </MudCardActions>
                 </MudCard>

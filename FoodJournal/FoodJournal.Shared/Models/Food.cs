@@ -9,13 +9,13 @@ namespace FoodJournal.Shared.Models
         [Required, MinLength(3), MaxLength(16)]
         public string Name { get; set; }
 
-        public string UserId { get; set; } = string.Empty;
-
 
         public virtual List<Meal> Meals { get; set; }
         public IEnumerable<MealGetDTO> GetMealsDTO()
         {
-            return Meals.Select(m => new MealGetDTO(m.Id, m.Name, m.MealType));
+            return Meals.Select(m => new MealGetDTO(m.Id, m.Name, m.IsStarred, m.DateEaten, m.MealType));
         }
+        public string UserId { get; set; }
+        public AppUser User { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace FoodJournal.API.Data
 {
     public sealed class AppDbContext : IdentityDbContext<AppUser>
     {
-        //Stores food to be chosen from. Not Instances
+
 
 
         public DbSet<Meal> Meals { get; set; }

@@ -14,5 +14,6 @@ builder.Services.AddHttpClient("API", client =>
 });
 builder.Services.AddScoped<IMealAPIService, MealAPIService>();
 builder.Services.AddScoped<IFoodAPIService, FoodAPIService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddMudServices();
 await builder.Build().RunAsync();

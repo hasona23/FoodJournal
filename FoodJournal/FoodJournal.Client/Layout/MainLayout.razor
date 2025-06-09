@@ -1,6 +1,6 @@
-﻿@inherits LayoutComponentBase
-
-
+﻿@using FoodJournal.Client.Services
+@inherits LayoutComponentBase
+@inject IUserService user;
 @* Required *@
 <MudThemeProvider IsDarkMode="true"/>
 <MudPopoverProvider />
@@ -22,6 +22,10 @@
 
 <div class="page">
     <div class="sidebar">
+        @{
+          
+            <MudAvatar Variant="Variant.Outlined" Style="margin:10px" ><MudIcon Icon="@Icons.Material.Outlined.AccountCircle"></MudIcon></MudAvatar>
+        }
          <NavMenu />
 
     </div>
@@ -29,6 +33,7 @@
     <main>
         <div class="top-row px-4">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <h1>@email</h1>
         </div>
 
         <article class="content px-4">
@@ -36,4 +41,13 @@
         </article>
     </main>
 </div>
+@code{
+    string email;
+    protected override async Task OnInitializedAsync()
+    {
+        //email = (await user.GetUserInfoAsync())?.Email;
+        
+    }
+
+}
 

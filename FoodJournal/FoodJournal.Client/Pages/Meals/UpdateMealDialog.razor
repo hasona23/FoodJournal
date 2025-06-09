@@ -75,7 +75,7 @@
     private void Update()
     {
         if(_model.IsValid)
-            MudDialog?.Close(DialogResult.Ok(new MealUpdateDTO(OldMealData.Id,_model.Name,newMealType,newFoods)));
+            MudDialog?.Close(DialogResult.Ok(new MealUpdateDTO(OldMealData.Id,_model.Name,false,OldMealData.DateEaten,newMealType,newFoods)));
     }
 
     private void Cancel() => MudDialog?.Cancel();

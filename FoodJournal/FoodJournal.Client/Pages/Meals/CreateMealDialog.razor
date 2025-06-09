@@ -73,7 +73,7 @@
     private void Create()
     {
         if(_model.IsValid)
-            MudDialog?.Close(DialogResult.Ok(new MealCreateDTO(_model.Name, mealType, foods)));
+            MudDialog?.Close(DialogResult.Ok(new MealCreateDTO(_model.Name, false,DateTime.Now,mealType, foods)));
     }
 
     private void Cancel() => MudDialog?.Cancel();

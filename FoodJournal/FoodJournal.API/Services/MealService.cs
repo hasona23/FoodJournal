@@ -14,23 +14,26 @@ public class MealService : IMealService
         _context = context;
     }
 
-    public async Task<Result> CreateMealAsync(MealCreateDTO mealCreateDTO)
+    public async Task<Result> CreateMealAsync(MealCreateDTO mealCreateDTO, string userId)
     {
-        Meal meal = new Meal { Name = mealCreateDTO.Name };
+        Meal meal = new Meal { Name = mealCreateDTO.Name, UserId = userId, IsStarred = mealCreateDTO.IsStarred, DateEaten = mealCreateDTO.DateEaten };
         if (mealCreateDTO.Foods != null)
         {
             meal.Foods = [];
+
             foreach (var foodDTO in mealCreateDTO.Foods)
             {
                 Food food = await _context.Foods.FindAsync(foodDTO.Id);
-                if (food != null)
+                if (food != null && food.UserId == userId)
                 {
                     meal.Foods.Add(food);
                 }
 
             }
         }
+
         await _context.Meals.AddAsync(meal);
+
         try
         {
 
@@ -43,10 +46,14 @@ public class MealService : IMealService
         return Result.Success();
     }
 
-    public async Task<Result> DeleteMealAsync(int id)
+    public async Task<Result> DeleteMealAsync(int id, string userId)
     {
-        Meal mealToDelete = await _context.Meals.FindAsync(id);
-        if (mealToDelete == null)
+
+        Meal mealToDelete;
+
+        mealToDelete = await _context.Meals.FindAsync(id);
+
+        if (mealToDelete == null || mealToDelete.UserId != userId)
         {
             return Result.NotFoundError();
         }
@@ -63,13 +70,14 @@ public class MealService : IMealService
         return Result.Success();
     }
 
-    public async Task<ResultWithValue<List<MealGetDTOWithFoods>>> GetAllMealsWithFoodAsync()
+    public async Task<ResultWithValue<List<MealGetDTOWithFoods>>> GetAllMealsWithFoodAsync(string userId)
     {
         try
         {
-            var meals = _context.Meals.Include(m => m.Foods);
+
+            var meals = _context.Meals.Include(m => m.Foods).Where(m => m.UserId == userId);
             var mealsDto = await meals.Select(m =>
-            new MealGetDTOWithFoods(m.Id, m.Name, m.MealType, m.GetFoodsDTO())
+            new MealGetDTOWithFoods(m.Id, m.Name, m.IsStarred, m.DateEaten, m.MealType, m.GetFoodsDTO())
             ).ToListAsync();
 
             return ResultWithValue<List<MealGetDTOWithFoods>>.Success(mealsDto);
@@ -81,16 +89,17 @@ public class MealService : IMealService
 
     }
 
-    public async Task<ResultWithValue<MealGetDTOWithFoods>> GetMealByIdAsync(int id)
+    public async Task<ResultWithValue<MealGetDTOWithFoods>> GetMealByIdAsync(int id, string userId)
     {
         try
         {
+
             Meal meal = await _context.Meals.Include(m => m.Foods).FirstOrDefaultAsync(m => m.Id == id);
-            if (meal == null)
+            if (meal == null || meal.UserId != userId)
             {
                 return ResultWithValue<MealGetDTOWithFoods>.Error(Result.NotFoundError());
             }
-            return ResultWithValue<MealGetDTOWithFoods>.Success(new MealGetDTOWithFoods(meal.Id, meal.Name, meal.MealType, meal.GetFoodsDTO()));
+            return ResultWithValue<MealGetDTOWithFoods>.Success(new MealGetDTOWithFoods(meal.Id, meal.Name, meal.IsStarred, meal.DateEaten, meal.MealType, meal.GetFoodsDTO()));
         }
         catch (Exception ex)
         {
@@ -98,23 +107,25 @@ public class MealService : IMealService
         }
     }
 
-    public async Task<Result> UpdateMealAsync(int id, MealUpdateDTO mealUpdateDTO)
+    public async Task<Result> UpdateMealAsync(MealUpdateDTO mealUpdateDTO, string userId)
     {
-        Meal meal = await _context.Meals.FindAsync(id);
-        if (meal == null)
+        Meal meal = await _context.Meals.FindAsync(mealUpdateDTO.Id);
+        if (meal == null || meal.UserId != userId)
         {
             return Result.NotFoundError();
         }
         await _context.Entry(meal).Collection(m => m.Foods).LoadAsync();
         meal.Name = mealUpdateDTO.Name;
-
+        meal.MealType = mealUpdateDTO.MealType;
+        meal.DateEaten = mealUpdateDTO.DateEaten;
+        meal.IsStarred = mealUpdateDTO.IsStarred;
         if (mealUpdateDTO.Foods != null)
         {
             meal.Foods.Clear();
             foreach (var foodDTO in mealUpdateDTO.Foods)
             {
                 Food food = await _context.Foods.FindAsync(foodDTO.Id);
-                if (food != null)
+                if (food != null && food.UserId == userId)
                 {
                     meal.Foods.Add(food);
                 }
@@ -126,7 +137,7 @@ public class MealService : IMealService
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Error Updating Food of ID:#{id} - {ex.Message}");
+            return Result.Fail($"Error Updating Food of ID:#{mealUpdateDTO.Id} - {ex.Message}");
         }
         return Result.Success();
 

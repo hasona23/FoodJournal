@@ -13,21 +13,51 @@
     </MudText>
 
 </span>
-@if (_meals != null)
+@if(_starredMeals != null)
 {
-    <MudTable Items="@_meals" Hover="true"
+    <MudContainer>
+        @foreach (var meal in _starredMeals)
+        {
+            <MudButton style="width:25%">
+                <MudCard style="width:100%">
+                    <MudCardContent class="d-flex justify-content-center align-items-center ">
+                        <MudText>@meal.Name</MudText>
+
+                    </MudCardContent>
+                    <MudCardActions class="d-inline-flex align-items-center justify-content-center">
+                       
+                        <MudIconButton Icon="@Icons.Material.Outlined.Add" Color="Color.Success" 
+                                        OnClick="@(async ()=>{await mealService.CreateMeal(new MealCreateDTO(meal.Name,false,DateTime.Now,meal.MealType,meal.Foods));await LoadMeals();})"></MudIconButton>
+
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Color="Color.Warning"
+                                       OnClick="@(()=>UpdateAsync(meal))"></MudIconButton>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error"
+                                       OnClick="@(()=>DeleteAsync(meal))"></MudIconButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Star" Color="Color.Warning"
+                                       OnClick="@(()=>UnStarAsync(meal))"></MudIconButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudButton>
+        }
+    </MudContainer>
+}
+@if (_unstarredMeals != null)
+{
+    <MudTable Items="@_unstarredMeals" Hover="true"
     Breakpoint="Breakpoint.Sm" Loading="@_loading"
     LoadingProgressColor="Color.Info">
         <ColGroup>
             <col style="width: 20%;" />
             <col style="width: 10%" />
-            <col style="width: 50%;" />
+            <col style="width: 20%;" />
+            <col style="width:30%"/>
             <col style="width: 20%" />
         </ColGroup>
         <HeaderContent>
             <MudTh>Name</MudTh>
             <MudTh>Meal Type</MudTh>
             <MudTh>Ingredients</MudTh>
+            <MudTh>Date</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -37,28 +67,37 @@
             <MudTd DataLabel="Ingredients">
                 @if(context.Foods.Any())
                 {
-                    @string.Join(" | ", context.Foods.Select(f => f.Name))
+                    @foreach(var food in context.Foods)
+                    {
+
+                        <MudChip Value="@food.Name"></MudChip>
+
+                    }
                 }
                 else
                 {
                     <MudText>None</MudText>
                 }
             </MudTd>
-
+            <MudTd DataLabel="Date">
+                <MudText>@context.DateEaten.ToString("dd/MM/yyyy")</MudText>
+            </MudTd>
             <MudTd DataLabel="">
                 <span class="d-inline">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error"
                     OnClick="@(()=>DeleteAsync(context))"></MudIconButton>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Color="Color.Warning"
                     OnClick="@(()=>UpdateAsync(context))"></MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Outlined.Star" Color="Color.Warning"
+                                   OnClick="@(()=>StarAsync(context))"></MudIconButton>
                 </span>
             </MudTd>
         </RowTemplate>
     </MudTable>
 }
 @code {
-    private List<MealGetDTOWithFoods>? _meals = null;
-
+    private List<MealGetDTOWithFoods>? _unstarredMeals;
+    private List<MealGetDTOWithFoods>? _starredMeals;
 
     private bool _loading = false;
     protected override async Task OnInitializedAsync()
@@ -70,8 +109,20 @@
     private async Task LoadMeals()
     {
         _loading = true;
-        _meals = await mealService.FetchAllMeals();
+        var meals = await mealService.FetchAllMeals();
+        _unstarredMeals = meals.Where(m => !m.IsStarred).ToList();
+        _starredMeals = meals.Where(m => m.IsStarred).ToList();
         _loading = false;
+    }
+    public async Task StarAsync(MealGetDTOWithFoods meal)
+    {
+        await mealService.UpdateMeal(meal.Id,new MealUpdateDTO(meal.Id,meal.Name,true,meal.DateEaten,meal.MealType,meal.Foods));
+        await LoadMeals();
+    }
+    public async Task UnStarAsync(MealGetDTOWithFoods meal)
+    {
+        await mealService.UpdateMeal(meal.Id,new MealUpdateDTO(meal.Id,meal.Name,false,meal.DateEaten,meal.MealType,meal.Foods));
+        await LoadMeals();
     }
     private async Task CreateAsync()
     {

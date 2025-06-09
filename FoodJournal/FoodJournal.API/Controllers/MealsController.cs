@@ -1,22 +1,40 @@
-﻿using FoodJournal.API.Services;
+﻿using FoodJournal.API.Models;
+using FoodJournal.API.Services;
+using FoodJournal.Shared.Models;
 using FoodJournal.Shared.Models.Dtos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FoodJournal.API.Controllers;
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class MealsController : ControllerBase
 {
     private IMealService _mealService;
-    public MealsController(IMealService mealService)
+    private UserManager<AppUser> _userManager;
+
+    public MealsController(IMealService mealService, UserManager<AppUser> userManager)
     {
         _mealService = mealService;
+        _userManager = userManager;
+    }
+
+    private async Task<AppUser> GetUser()
+    {
+        return await _userManager.FindByEmailAsync(User.Claims.First(c => c.Type == ClaimTypes.Email).Value);
     }
 
     [HttpPost]
     public async Task<ActionResult> CreateMeal(MealCreateDTO mealCreateDTO)
+
     {
-        var result = await _mealService.CreateMealAsync(mealCreateDTO);
+        if (string.IsNullOrEmpty(mealCreateDTO.Name.Trim()))
+            return BadRequest(new Result("Name cant be empty/null"));
+
+        var result = await _mealService.CreateMealAsync(mealCreateDTO, (await GetUser()).Id);
         if (result.IsSuccess())
         {
             return Created();
@@ -27,7 +45,7 @@ public class MealsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteMeal(int id)
     {
-        var result = await _mealService.DeleteMealAsync(id);
+        var result = await _mealService.DeleteMealAsync(id, (await GetUser()).Id);
         if (result.IsSuccess())
         {
             return NoContent();
@@ -42,7 +60,10 @@ public class MealsController : ControllerBase
         {
             return BadRequest("ID DOESNT MATCH");
         }
-        var result = await _mealService.UpdateMealAsync(id, mealDto);
+        if (string.IsNullOrEmpty(mealDto.Name.Trim()))
+            return BadRequest(new Result("Name cant be empty/null"));
+
+        var result = await _mealService.UpdateMealAsync(mealDto, (await GetUser()).Id);
         if (result.IsSuccess())
         {
             return NoContent();
@@ -53,7 +74,7 @@ public class MealsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<MealGetDTOWithFoods>> GetMealById(int id)
     {
-        var result = await _mealService.GetMealByIdAsync(id);
+        var result = await _mealService.GetMealByIdAsync(id, (await GetUser()).Id);
         if (result.IsSuccess)
         {
             return Ok(result.Value);
@@ -64,7 +85,7 @@ public class MealsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<MealGetDTOWithFoods>>> GetAllMeal()
     {
-        var result = await _mealService.GetAllMealsWithFoodAsync();
+        var result = await _mealService.GetAllMealsWithFoodAsync((await GetUser()).Id);
         if (result.IsSuccess)
         {
             return Ok(result.Value);

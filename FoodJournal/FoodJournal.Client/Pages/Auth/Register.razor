@@ -1,0 +1,39 @@
+﻿@using FoodJournal.Client.Services
+@using System.ComponentModel.DataAnnotations
+@page "/register"
+@inject NavigationManager _navManager
+<h3>Register</h3>
+
+
+<MudTextField @bind-Value="_userForm.Email" For="() => _userForm.Email" HelperText="Email"> </MudTextField>
+<MudTextField @bind-Value="_userForm.Password" For="() => _userForm.Password" InputType="InputType.Password" HelperText="Password"></MudTextField>
+<MudText>@_result</MudText>
+<MudButton OnClick="Action">Register</MudButton>
+<MudLink Href="/login">Already have an account</MudLink>
+@code {
+    [Inject] private IJSRuntime _jsRuntime { get; set; }
+    [Inject] private IUserService userService { get; set; }
+    string token = "token";
+    private string _result;
+    private UserForm _userForm = new UserForm();
+    public async Task Action()
+    {
+        _result =  await userService.Register(_userForm.Email,_userForm.Password);
+        if (string.IsNullOrEmpty(_result))
+            _navManager.NavigateTo("/");
+        //await GetToken();
+    }
+    public async Task GetToken()
+    {
+        token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+    }
+    public class UserForm()
+    {
+        [Required]
+        [EmailAddress]
+
+        public string Email { get; set; }
+        [Required]
+        public string Password { get; set; }
+    }
+}

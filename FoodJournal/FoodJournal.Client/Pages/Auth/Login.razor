@@ -1,0 +1,36 @@
+﻿@using FoodJournal.Client.Services
+@using System.ComponentModel.DataAnnotations
+@page "/login"
+@inject NavigationManager _navManager
+<h3>Login</h3>
+
+
+<MudTextField @bind-Value="_userForm.Email" For="() => _userForm.Email" HelperText="Email"> </MudTextField>
+<MudTextField @bind-Value="_userForm.Password" For="() => _userForm.Password" InputType="InputType.Password" HelperText="Password"></MudTextField>
+<MudText Color="Color.Error">@_result</MudText>
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoginInto">Login</MudButton>
+<MudLink Href="/register">Don't have an account yet</MudLink>
+@code {
+   
+    [Inject] private IUserService userService { get; set; }
+ 
+    private string _result;
+    private UserForm _userForm = new UserForm();
+    public async Task LoginInto()
+    {
+        _result = await userService.Login(_userForm.Email,_userForm.Password);
+        if (string.IsNullOrEmpty(_result))
+            _navManager.NavigateTo("/");
+        //await GetToken();
+    }
+
+    public class UserForm()
+    {
+        [Required]
+        [EmailAddress]
+
+        public string Email { get; set; } 
+        [Required]
+        public string Password { get; set; }
+    }
+}

@@ -5,50 +5,32 @@ using FoodJournal.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'UserContextConnection' not found."); ;
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'UserContextConnection' not found.");
 
 // Add services to the container.
 var config = builder.Configuration;
 var jwtConfig = builder.Configuration.GetSection("Jwt");
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseInMemoryDatabase("AppDb");
-
 });
 
 builder.Services.AddScoped<IMealService, MealService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
-
 builder.Services.AddEndpointsApiExplorer();
 
-
 builder.Services.AddIdentityApiEndpoints<AppUser>().AddEntityFrameworkStores<AppDbContext>();
-
-builder.Services.AddAuthentication().AddJwtBearer
-    (
-        options => options.TokenValidationParameters = new TokenValidationParameters
-        {
-            //ValidateIssuer = true,
-            //ValidateAudience = true,
-            //ValidateLifetime = true,
-            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
-            //ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtConfig["Issuer"] ?? throw new("JWT issuer not found"),
-            ValidAudience = jwtConfig["Audience"] ?? throw new("JWT Audience not found"),
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Key"] ?? throw new("JWT encryption KEY not found")))
-
-        }
-    );
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
-
 
 builder.Services.AddCors(options =>
 {
@@ -61,48 +43,57 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (IServiceScope scope = app.Services.CreateScope())
+// Seed data
+using (var scope = app.Services.CreateScope())
 {
-    AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     context.Database.EnsureCreated();
-    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<AppUser>>();
-    AppUser? user = Activator.CreateInstance<AppUser>();
-    user.UserName = "admin";
-    user.Email = "admin@gmail.com";
-    var result = await signInManager.UserManager.CreateAsync(user, "Admin_123");
-    foreach (var item in result.Errors)
-    {
-        scope.ServiceProvider.GetRequiredService<ILogger<Program>>().LogCritical(item.Description);
-    }
-    user = await signInManager.UserManager.FindByEmailAsync(user.Email);
 
-    DataSeeder.SeedData(context, user.Id);
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<AppUser>>();
+
+    var user = new AppUser
+    {
+        UserName = "user@example.com",
+        Email = "user@example.com"
+    };
+    await signInManager.UserManager.CreateAsync(user, "Password_123");
+
+    var adminUser = new AppUser
+    {
+        UserName = "admin@example.com",
+        Email = "admin@example.com"
+    };
+    await signInManager.UserManager.CreateAsync(adminUser, "Admin_123");
+
+    var foundUser = await signInManager.UserManager.FindByEmailAsync(adminUser.Email);
+    DataSeeder.SeedData(context, foundUser.Id);
 }
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline - CORRECT ORDER IS IMPORTANT
+app.UseCors("AllowAll"); // CORS should be early in the pipeline
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(
-        options =>
-        {
-            options.WithTitle("Meal Planner API")
-                    .WithTheme(ScalarTheme.BluePlanet)
-                    .WithModels(true)
-                    ;
-
-        });
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Meal Planner API")
+                .WithTheme(ScalarTheme.BluePlanet)
+                .WithModels(true);
+    });
 }
 
 //app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-var userEndPoints = app.MapGroup("/User");
+
+
+// Identity endpoints
+var userEndPoints = app.MapGroup("api/User");
 userEndPoints.MapIdentityApi<AppUser>();
-userEndPoints.MapPost("/logout", async (SignInManager<AppUser> signInManager,
-    [FromBody] object empty) =>
+userEndPoints.MapPost("/logout", async (SignInManager<AppUser> signInManager, [FromBody] object empty) =>
 {
     if (empty != null)
     {
@@ -112,5 +103,4 @@ userEndPoints.MapPost("/logout", async (SignInManager<AppUser> signInManager,
     return Results.Unauthorized();
 });
 
-app.UseCors("AllowAll");
 app.Run();
