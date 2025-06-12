@@ -1,0 +1,65 @@
+﻿<MudExpansionPanel Text="Search" style="display:inline">
+
+    <MudTextField @bind-Value="SearchName" @bind-Value:after="() => OnChange.Invoke()" style="max-width:30% ; margin-bottom:5px" Clearable Label="Search Name"></MudTextField>
+
+    <MudSelect T="MealType?" @bind-Value="MealType" @bind-Value:after="() => OnChange.Invoke()" style="max-width:30%" Clearable Label="Meal Type" ToStringFunc="@(value => value?.ToString() ?? "None")">
+        @{
+            foreach (var mealType in Enum.GetValues<MealType>())
+            {
+                <MudSelectItem Value="(MealType?)mealType">@Enum.GetName(mealType)</MudSelectItem>
+            }
+           
+        }
+    </MudSelect>
+    <MudDatePicker @bind-Date="MealDate" @bind-Date:after="() => OnChange.Invoke()" style="max-width:30%" Label="Date Eaten" Clearable></MudDatePicker>
+    <MudExpansionPanel Text="Foods">
+        <MudToggleGroup T="FoodGetDTO"
+                        SelectionMode="SelectionMode.MultiSelection"
+                        @bind-Values:after="() => OnChange.Invoke()"
+                        @bind-Values="_selectedFoods" Color="Color.Secondary"
+                        
+        >
+            @foreach (FoodGetDTO fooditem in Foods)
+            {
+                <MudToggleItem Value="@(fooditem)"
+                               UnselectedIcon="@Icons.Material.Filled.CheckBoxOutlineBlank"
+                               SelectedIcon="@Icons.Material.Filled.CheckBox" />
+
+            }
+        </MudToggleGroup>
+    </MudExpansionPanel>
+
+</MudExpansionPanel>
+
+@code {
+    public string SearchName { get; set; }
+    public DateTime? MealDate { get; set; }
+    public MealType? MealType { get; set; }
+    public List<FoodGetDTO> Foods { get;set;}
+    private IEnumerable<FoodGetDTO> _selectedFoods { get; set; } = [];
+    public event Action OnChange;
+    public bool MealMeetsCriteria(MealGetDTOWithFoods meal)
+    {
+        if (!string.IsNullOrEmpty(SearchName) && !meal.Name.Contains(SearchName))
+        {
+            return false;
+        }
+        if (MealDate.HasValue && meal.DateEaten != MealDate.Value)
+        {
+            return false;
+        }
+        if (MealType.HasValue && meal.MealType != MealType)
+        {
+            return false;
+        }
+        foreach (var food in _selectedFoods)
+        {
+            if (!meal.Foods.Where(f => f.Id == food.Id).Any())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+}

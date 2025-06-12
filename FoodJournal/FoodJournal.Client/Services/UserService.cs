@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FoodJournal.Client.Models;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net;
 using System.Net.Http.Json;
@@ -10,6 +11,7 @@ public class UserService : IUserService
 
     private IHttpClientFactory _httpClientFactory;
     private IJSRuntime _jsRuntime;
+    private readonly string _storageType = "localStorage";
 
     private NavigationManager _navManager;
     public UserService(IHttpClientFactory httpClientFactory, IJSRuntime jsRuntime, NavigationManager navigationManager)
@@ -20,16 +22,24 @@ public class UserService : IUserService
     }
     public async Task<string> Login(string email, string password)
     {
-        var result = await GetClient().PostAsJsonAsync("User/login", new { email, password });
-        if (result.IsSuccessStatusCode)
+        try
         {
-            Token token = await result.Content.ReadFromJsonAsync<Token>();
-            await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "authToken", token.AccessToken);
-            return "";
+            var result = await GetClient().PostAsJsonAsync("User/login", new { email, password });
+            if (result.IsSuccessStatusCode)
+            {
+                Token token = await result.Content.ReadFromJsonAsync<Token>();
+                await _jsRuntime.InvokeVoidAsync($"{_storageType}.setItem", "authToken", token.AccessToken);
+                return "";
+            }
+            if (result.StatusCode == HttpStatusCode.Unauthorized)
+                return "Wrong Email or Password";
         }
-        if (result.StatusCode == HttpStatusCode.Unauthorized)
-            return "Wrong Email or Password";
-        return "Error Happened";
+        catch
+        {
+            return "Error Happened";
+        }
+        return "";
+
     }
 
     public async Task Logout()
@@ -39,22 +49,37 @@ public class UserService : IUserService
 
     public async Task<string> Register(string email, string password)
     {
-        var result = await GetClient().PostAsJsonAsync("User/register", new { email, password });
-        if (result.IsSuccessStatusCode)
+        try
         {
-
-            return "";
+            var result = await GetClient().PostAsJsonAsync("User/register", new { email, password });
+            if (result.IsSuccessStatusCode)
+            {
+                await Login(email, password);
+                return "";
+            }
+            if (result.StatusCode == HttpStatusCode.BadRequest)
+                return "Email Already Taken";
         }
-        if (result.StatusCode == HttpStatusCode.BadRequest)
-            return "Email Already Taken";
-        return "Error Happened";
+        catch
+        {
+            return "Error Happened";
+        }
+        return "";
     }
     public async Task<string> GetToken()
     {
-        return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+        try
+        {
+            return await _jsRuntime.InvokeAsync<string>($"{_storageType}.getItem", "authToken");
+        }
+        catch
+        {
+            return "";
+        }
+
     }
 
-    public async Task<UserInfo> GetUserInfoAsync()
+    public async Task<UserInfo> GetUserInfo()
     {
         try
         {
@@ -75,18 +100,6 @@ public class UserService : IUserService
             return null;
         }
     }
-    public UserInfo GetUserInfo()
-    {
-        var result = GetClient().GetAsync("/api/User/manage/info").Result;
-        if (result.IsSuccessStatusCode)
-        {
-            return result.Content.ReadFromJsonAsync<UserInfo>().Result;
-        }
-        if (result.StatusCode == HttpStatusCode.Unauthorized)
-            _navManager.NavigateTo("/login");
-
-        return null;
-    }
 
     public HttpClient GetClient()
     {
@@ -98,8 +111,5 @@ public class UserService : IUserService
     {
         public string AccessToken { get; set; }
     }
-    public class UserInfo
-    {
-        public string Email { get; set; }
-    }
+
 }

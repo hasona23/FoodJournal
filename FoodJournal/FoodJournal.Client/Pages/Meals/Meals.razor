@@ -5,22 +5,27 @@
 @page "/meals"
 
 <span class="d-inline">
+
     <MudText style="margin-right:5px" Typo="Typo.h3">
         Meals
+        
         <MudIconButton @onclick="CreateAsync" Icon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
 
         </MudIconButton>
     </MudText>
-
 </span>
+<MealSearchBar @ref="searchBar"></MealSearchBar>
 @if(_starredMeals != null)
 {
     <MudContainer>
+        <MudStack Row="true" Spacing="4" Wrap="Wrap.NoWrap">
+
         @foreach (var meal in _starredMeals)
         {
             <MudButton style="width:25%">
                 <MudCard style="width:100%">
                     <MudCardContent class="d-flex justify-content-center align-items-center ">
+               
                         <MudText>@meal.Name</MudText>
 
                     </MudCardContent>
@@ -39,13 +44,18 @@
                 </MudCard>
             </MudButton>
         }
+        </MudStack>
     </MudContainer>
 }
 @if (_unstarredMeals != null)
 {
-    <MudTable Items="@_unstarredMeals" Hover="true"
+    var mealsToView = @_unstarredMeals.Where(m => searchBar.MealMeetsCriteria(m)).ToList();
+    <MudText>Meals Count: @mealsToView.Count</MudText>
+
+    <MudTable Items="@mealsToView" Hover="true"
     Breakpoint="Breakpoint.Sm" Loading="@_loading"
     LoadingProgressColor="Color.Info">
+
         <ColGroup>
             <col style="width: 20%;" />
             <col style="width: 10%" />
@@ -54,23 +64,25 @@
             <col style="width: 20%" />
         </ColGroup>
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Meal Type</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MealGetDTOWithFoods, object>(x => x.Name)">Name</MudTableSortLabel> </MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MealGetDTOWithFoods, object>(x => x.MealType)">Meal Type</MudTableSortLabel></MudTh>
             <MudTh>Ingredients</MudTh>
-            <MudTh>Date</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MealGetDTOWithFoods, object>(x => x.DateEaten)">Date Eaten</MudTableSortLabel></MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-
+            
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Meal Type">@Enum.GetName(context.MealType)</MudTd>
             <MudTd DataLabel="Ingredients">
                 @if(context.Foods.Any())
                 {
+                    Random random = new();
+                    Color[] colorsOptions = [Color.Error, Color.Info, Color.Success, Color.Warning];
                     @foreach(var food in context.Foods)
                     {
 
-                        <MudChip Value="@food.Name"></MudChip>
+                        <MudChip Value="@food.Name" Color="colorsOptions[random.Next(0,colorsOptions.Length)]"></MudChip>
 
                     }
                 }
@@ -79,6 +91,7 @@
                     <MudText>None</MudText>
                 }
             </MudTd>
+            
             <MudTd DataLabel="Date">
                 <MudText>@context.DateEaten.ToString("dd/MM/yyyy")</MudText>
             </MudTd>
@@ -88,22 +101,33 @@
                     OnClick="@(()=>DeleteAsync(context))"></MudIconButton>
                     <MudIconButton Icon="@Icons.Material.Outlined.Edit" Color="Color.Warning"
                     OnClick="@(()=>UpdateAsync(context))"></MudIconButton>
-                    <MudIconButton Icon="@Icons.Material.Outlined.Star" Color="Color.Warning"
+                    <MudIconButton Icon="@Icons.Material.Filled.StarOutline" Color="Color.Warning"
                                    OnClick="@(()=>StarAsync(context))"></MudIconButton>
                 </span>
             </MudTd>
         </RowTemplate>
+        <PagerContent>
+            
+            <MudTablePager PageSizeOptions="new int[]{10,25,50}">
+
+            </MudTablePager>
+        </PagerContent>
     </MudTable>
 }
 @code {
+
+
     private List<MealGetDTOWithFoods>? _unstarredMeals;
     private List<MealGetDTOWithFoods>? _starredMeals;
-
+    private List<FoodGetDTO> _foods;
     private bool _loading = false;
+    private MealSearchBar searchBar;
     protected override async Task OnInitializedAsync()
     {
 
         await LoadMeals();
+        _foods = (await GetAllFoodItems()).ToList();
+        searchBar.OnChange += StateHasChanged;
 
     }
     private async Task LoadMeals()

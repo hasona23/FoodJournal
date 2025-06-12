@@ -1,4 +1,6 @@
-﻿namespace FoodJournal.Client.Services;
+﻿using FoodJournal.Client.Models;
+
+namespace FoodJournal.Client.Services;
 
 public interface IUserService
 {
@@ -6,6 +8,5 @@ public interface IUserService
     public Task Logout();
     public Task<string> Register(string email, string password);
     public Task<string> GetToken();
-    public Task<UserService.UserInfo> GetUserInfoAsync();
-    public UserService.UserInfo GetUserInfo();
+    public Task<UserInfo> GetUserInfo();
 }

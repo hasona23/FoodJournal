@@ -1,0 +1,78 @@
+﻿@page "/report"
+@using Services;
+@using System.IO;
+@inject IMealAPIService _mealAPIService;
+<h3>Report</h3>
+
+<MudSelect T="MealType?" @bind-Value="queryMealType"  style="max-width:30%" Clearable Label="Meal Type" ToStringFunc="@(value => value?.ToString() ?? "None")">
+    @{
+        foreach (var mealType in Enum.GetValues<MealType>())
+        {
+            <MudSelectItem Value="(MealType?)mealType">@Enum.GetName(mealType)</MudSelectItem>
+        }
+
+    }
+</MudSelect>
+<MudDateRangePicker Label="Time Span" @bind-DateRange="_dateRange" Clearable></MudDateRangePicker>
+<MudButton OnClick="LoadReportMeals">Load Report</MudButton>
+
+
+@if(_meals != null)
+{
+    
+        
+        <MudText>Meals Count: @_meals.Count</MudText>
+        <MudTable Items="@_meals" Hover="true"
+                  Breakpoint="Breakpoint.Sm" 
+                  LoadingProgressColor="Color.Info">
+
+            
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<MealView, object>(x => x.Name)">Name</MudTableSortLabel> </MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<MealView, object>(x => x.MealType)">Meal Type</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<MealView, object>(x => x.Count)">Count</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Meal Type">@Enum.GetName(context.MealType)</MudTd>
+                <MudTd DataLabel="Count">@context.Count</MudTd>
+
+              
+            </RowTemplate>
+            
+        </MudTable>
+    
+}
+@code {
+    private DateRange _dateRange;
+    private MealType? queryMealType;
+    private List<MealView> _meals;
+    private List<MealGetDTOWithFoods> loadedMeals;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadedMeals = await _mealAPIService.FetchAllMeals();
+
+    }
+    private async Task LoadReportMeals()
+    {
+
+        if (_dateRange.Start.HasValue && _dateRange.End.HasValue)
+        {
+            var meals = loadedMeals.Where(meal => meal.DateEaten >= _dateRange.Start && meal.DateEaten <= _dateRange.End &&
+                (!queryMealType.HasValue || (queryMealType.HasValue && queryMealType.Value == meal.MealType)));
+            _meals = meals.DistinctBy(m => m.Name).Select(m => new MealView(m.Name, m.MealType, meals.Where(m2 => m2.Name == m.Name).Count())).OrderBy(m => m.MealType).ToList();
+        }
+       
+    }
+   
+    public readonly struct MealView(string name,MealType mealType,int count)
+    {
+        public readonly string Name = name;
+        public readonly MealType MealType = mealType;
+        public readonly int Count = count;
+    }
+    
+}
